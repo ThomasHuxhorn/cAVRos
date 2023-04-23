@@ -21,6 +21,8 @@
 #ifndef IO_HPP
 #define IO_HPP
 
+#include <type_traits>
+
 // Include lib avr gcc
 #include <avr/io.h>
 
@@ -28,7 +30,7 @@
 /// \TODO Can we do this with c++ templates?
 #define ENUM_FLAG_OPERATORS(T)  \
   inline T operator| (T left, T right) { \
-    using U = __underlying_type(T); \
+    using U = std::underlying_type_t<T>; \
     return T( U(left) | U(right) ); \
   }
 

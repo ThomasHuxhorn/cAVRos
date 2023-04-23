@@ -22,6 +22,7 @@
 #define ADC_HPP
 
 
+
 /*
  * Begin Analog Digital Converter
  */
@@ -140,7 +141,7 @@ struct ADC_t {
     }
 };
 
-static_assert(sizeof(ADC_t) == 1);
+static_assert(std::is_empty_v<ADC_t>);
 
 inline ADC_t adc;
 

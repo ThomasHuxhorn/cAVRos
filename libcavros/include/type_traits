@@ -1,0 +1,128 @@
+// This file is from gcc 12.1.0 as avr-gcc does not provide the type_traits file.
+// I removed everything and just add parts that I need so far.
+// Just include the original gcc 12 type_traits file does not work, as there are some defines used wich does not exist with avr gcc.
+// I don't want to dig deep on this.
+
+// C++11 <type_traits> -*- C++ -*-
+
+// Copyright (C) 2007-2022 Free Software Foundation, Inc.
+//
+// This file is part of the GNU ISO C++ Library.  This library is free
+// software; you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 3, or (at your option)
+// any later version.
+
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// Under Section 7 of GPL version 3, you are granted additional
+// permissions described in the GCC Runtime Library Exception, version
+// 3.1, as published by the Free Software Foundation.
+
+// You should have received a copy of the GNU General Public License and
+// a copy of the GCC Runtime Library Exception along with this program;
+// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+// <http://www.gnu.org/licenses/>.
+
+/** @file include/type_traits
+ *  This is a Standard C++ Library header.
+ */
+
+#ifndef _GLIBCXX_TYPE_TRAITS
+#define _GLIBCXX_TYPE_TRAITS 1
+
+#pragma GCC system_header
+
+
+namespace std
+{
+
+  /**
+   * @defgroup metaprogramming Metaprogramming
+   * @ingroup utilities
+   *
+   * Template utilities for compile-time introspection and modification,
+   * including type classification traits, type property inspection traits
+   * and type transformation traits.
+   *
+   * @since C++11
+   *
+   * @{
+   */
+
+
+  /// integral_constant
+  template<typename _Tp, _Tp __v>
+    struct integral_constant
+    {
+      static constexpr _Tp                  value = __v;
+      typedef _Tp                           value_type;
+      typedef integral_constant<_Tp, __v>   type;
+      constexpr operator value_type() const noexcept { return value; }
+#if __cplusplus > 201103L
+
+#define __cpp_lib_integral_constant_callable 201304L
+
+      constexpr value_type operator()() const noexcept { return value; }
+#endif
+    };
+
+  /// The type used as a compile-time boolean with true value.
+  using true_type =  integral_constant<bool, true>;
+
+  /// The type used as a compile-time boolean with false value.
+  using false_type = integral_constant<bool, false>;
+
+#if __cplusplus >= 201703L
+# define __cpp_lib_bool_constant 201505L
+  /// Alias template for compile-time boolean constant types.
+  /// @since C++17
+  template<bool __v>
+    using bool_constant = integral_constant<bool, __v>;
+#endif
+
+
+  /// is_enum
+  template<typename _Tp>
+    struct is_enum
+    : public integral_constant<bool, __is_enum(_Tp)>
+    { };
+
+
+  template<typename _Tp, bool = is_enum<_Tp>::value>
+    struct __underlying_type_impl
+    {
+      using type = __underlying_type(_Tp);
+    };
+
+  template<typename _Tp>
+    struct __underlying_type_impl<_Tp, false>
+    { };
+
+  /// The underlying type of an enum.
+  template<typename _Tp>
+    struct underlying_type
+    : public __underlying_type_impl<_Tp>
+    { };
+
+  /// Alias template for underlying_type
+  template<typename _Tp>
+    using underlying_type_t = typename underlying_type<_Tp>::type;
+
+
+  /// is_empty
+  template<typename _Tp>
+    struct is_empty
+    : public integral_constant<bool, __is_empty(_Tp)>
+    { };
+
+  template <typename _Tp>
+    inline constexpr bool is_empty_v = is_empty<_Tp>::value;
+
+
+} // namespace std
+
+#endif  // _GLIBCXX_TYPE_TRAITS
