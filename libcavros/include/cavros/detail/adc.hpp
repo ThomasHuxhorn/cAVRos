@@ -43,14 +43,14 @@
 #undef ADSC
 #undef ADEN
 
-/// ADC Voltage Reference Selections
+/// ADC Voltage Reference Selections Bits
 enum class REFS_t : uint8_t { REFS_zero=0, REFS0=1, REFS1=2 };
 using enum REFS_t;
 
 // Create bit manipulation functions for enum REFS_t
 ENUM_FLAG_OPERATORS(REFS_t)
 
-/// ADC Input Channel Selections
+/// ADC Input Channel Selections Bits
 enum class MUX_t : uint8_t { MUX_zero=0, MUX0=1, MUX1=2, MUX2=4, MUX3=8 };
 using enum MUX_t;
 
@@ -81,17 +81,17 @@ static_assert(sizeof(ADMUX_t) == 1);
 /// Type safe replacment register name for ADCSRA
 volatile static ADMUX_t& AD_MUX = *(ADMUX_t*)&ADMUX;
 
-/// ADC Prescaler Selections
-enum class AD_t : uint8_t { ADPS_zero=0, ADPS0=1, ADPS1=2, ADPS2=4};
-using enum AD_t;
+/// ADC Prescaler Selections Bits
+enum class ADPS_t : uint8_t { ADPS_zero=0, ADPS0=1, ADPS1=2, ADPS2=4};
+using enum ADPS_t;
 
-// Create bit manipulation functions for enum AD_t
-ENUM_FLAG_OPERATORS(AD_t)
+// Create bit manipulation functions for enum ADPS_t
+ENUM_FLAG_OPERATORS(ADPS_t)
 
 /// ADC Control and Status Register A
 struct ADCSRA_t {
   // ADC Prescaler Select Bits These bits determine the division factor between the XTAL frequency and the input clock to theADC.
-  AD_t ADPS : 3;
+  ADPS_t ADPS : 3;
   /// ADC Interrupt Enable. When this bit is written to one and the I-bit in SREG is set, the ADC Conversion Complete Inter-rupt is activated.
   uint8_t ADIE : 1;
   /// ADC Interrupt Flag This bit is set when an ADC conversion completes and the Data Registers are updated.
@@ -109,5 +109,39 @@ static_assert(sizeof(ADCSRA_t) == 1);
 /// Type safe replacment register name for ADCSRA
 volatile static ADCSRA_t& AD_CSRA = *(ADCSRA_t*)&ADCSRA;
 
+struct ADC_t {
+
+    /// Select the voltage reference for the ADC
+    enum class Voltage : uint8_t { AREF=0, AVCC=1, R=2, internal=3 };
+
+    /// Select division factor for the ADC, Prescaler
+    enum class Prescaler : uint8_t { factor2=1, factor4=2, factor8=3, factor16=4, factor32=5, factor64=6, factor128=7 };
+
+    void init(Voltage reference, Prescaler factor) {
+        AD_MUX.REFS = REFS_t(reference);
+        AD_CSRA.ADPS = ADPS_t(factor);
+        AD_CSRA.ADEN = true;
+    }
+
+    //select ADC channel
+    void set_channel(uint8_t channel) {
+        AD_MUX.setChannel(channel);
+    }
+
+    // Start singlae conversion
+    uint16_t start_conversion() {
+        assert(AD_CSRA.ADEN)
+        AD_CSRA.ADSC = true;
+
+        // wait until conversion complete ADSC=0 -> Complete
+        while (AD_CSRA.ADSC);
+
+        return ADC;
+    }
+};
+
+static_assert(sizeof(ADC_t) == 1);
+
+inline ADC_t adc;
 
 #endif // ADC_HPP
